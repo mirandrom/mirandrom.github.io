@@ -27,10 +27,12 @@ table {
   td,
   th {
     font-size: 1rem;
+    color: var(--global-text-color-light)
   }
 
   th {
     font-weight: bold;
+    color: var(--global-text-color)
   }
 }
 
@@ -629,12 +631,13 @@ footer.sticky-bottom {
 
         abbr {
           display: inline-block;
-          background-color: var(--global-theme-color);
+          background-color: var(--global-bg-color);
           padding-left: 1rem;
           padding-right: 1rem;
+          font-weight: lighter;
 
           a {
-            color: white;
+            color: var(--global-text-color-light);
 
             &:hover {
               text-decoration: none;
@@ -793,6 +796,11 @@ html.transition *:after {
 
 // Extra Markdown style (post Customization)
 .post {
+  h1 {
+    color: var(--global-title-color);
+    font-size: 3rem;
+  }
+
   .post-meta {
     color: var(--global-text-color-light);
     font-size: 0.875rem;

@@ -4,11 +4,12 @@
  ******************************************************************************/
 
 // Colors
-$red-color:           #FF3636 !default;
-$red-color-dark:      #B71C1C !default;
-$orange-color:        #F29105 !default;
-$blue-color:          #0076df !default;
-$blue-color-dark:     #00369f !default;
+$red-color:           #cc241d !default;
+$red-color-dark:      #9d0006 !default;
+$orange-color:        #d65d0e !default;
+$orange-color-dark:   #af3a03 !default;
+$blue-color:          #458588 !default;
+$blue-color-dark:     #076678 !default;
 $cyan-color:          #2698BA !default;
 $light-cyan-color:    lighten($cyan-color, 25%);
 $green-color:         #00ab37 !default;

@@ -1,84 +1,86 @@
 ---
 ---
 
-@string{aps = {American Physical Society,}}
-
-@book{einstein1956investigations,
-  bibtex_show={true},
-  title={Investigations on the Theory of the Brownian Movement},
-  author={Einstein, Albert},
-  year={1956},
-  publisher={Courier Corporation},
-  preview={brownian-motion.gif}
+@inproceedings{dong-etal_2021_discourseaware-unsupervised-summarization,
+	address = {Online},
+	title = {Discourse-{Aware} {Unsupervised} {Summarization} for {Long} {Scientific} {Documents}},
+	url = {https://aclanthology.org/2021.eacl-main.93},
+	doi = {10.18653/v1/2021.eacl-main.93},
+	abstract = {We propose an unsupervised graph-based ranking model for extractive summarization of long scientific documents. Our method assumes a two-level hierarchical graph representation of the source document, and exploits asymmetrical positional cues to determine sentence importance. Results on the PubMed and arXiv datasets show that our approach outperforms strong unsupervised baselines by wide margins in automatic metrics and human evaluation. In addition, it achieves performance comparable to many state-of-the-art supervised approaches which are trained on hundreds of thousands of examples. These results suggest that patterns in the discourse structure are a strong signal for determining importance in scientific articles.},
+	urldate = {2023-10-04},
+	booktitle = {Proceedings of the 16th {Conference} of the {European} {Chapter} of the {Association} for {Computational} {Linguistics}: {Main} {Volume}},
+	publisher = {Association for Computational Linguistics},
+	author = {Dong*, Yue and Mircea*, Andrei and Cheung, Jackie Chi Kit},
+	year = {2021},
+	pages = {1089--1102},
+  code={https://github.com/mirandrom/HipoRank},
+  pdf={paper_dong_2021_discourseaware.pdf},
+  poster={poster_dong_2021_discourseaware.pdf},
 }
 
-@article{einstein1950meaning,
-  abbr={AJP},
-  bibtex_show={true},
-  title={The meaning of relativity},
-  author={Einstein, Albert and Taub, AH},
-  journal={American Journal of Physics},
-  volume={18},
-  number={6},
-  pages={403--404},
-  year={1950},
-  publisher={American Association of Physics Teachers}
+@inproceedings{brunila-etal_2021_bridging-gap-supervised,
+	address = {Kyiv, Ukraine},
+	title = {Bridging the gap between supervised classification and unsupervised topic modelling for social-media assisted crisis management},
+	url = {https://aclanthology.org/2021.adaptnlp-1.5},
+	abstract = {Social media such as Twitter provide valuable information to crisis managers and affected people during natural disasters. Machine learning can help structure and extract information from the large volume of messages shared during a crisis; however, the constantly evolving nature of crises makes effective domain adaptation essential. Supervised classification is limited by unchangeable class labels that may not be relevant to new events, and unsupervised topic modelling by insufficient prior knowledge. In this paper, we bridge the gap between the two and show that BERT embeddings finetuned on crisis-related tweet classification can effectively be used to adapt to a new crisis, discovering novel topics while preserving relevant classes from supervised training, and leveraging bidirectional self-attention to extract topic keywords. We create a dataset of tweets from a snowstorm to evaluate our method's transferability to new crises, and find that it outperforms traditional topic models in both automatic, and human evaluations grounded in the needs of crisis managers. More broadly, our method can be used for textual domain adaptation where the latent classes are unknown but overlap with known classes from other domains.},
+	booktitle = {Proceedings of the {Second} {Workshop} on {Domain} {Adaptation} for {NLP}},
+	publisher = {Association for Computational Linguistics},
+	author = {Brunila*, Mikael and Zhao*, Rosie and Mircea*, Andrei and Lumley, Sam and Sieber, Renee},
+	year = {2021},
+	pages = {33--49},
+  code={https://github.com/smacawi/bert-topics},
+  pdf={paper_brunila_2021_bridging.pdf},
+  poster={poster_brunila_2021_bridging.pdf},
 }
 
-@article{PhysRev.47.777,
-  abbr={PhysRev},
-  title={Can Quantum-Mechanical Description of Physical Reality Be Considered Complete?},
-  author={Einstein, A. and Podolsky, B. and Rosen, N.},
-  abstract={In a complete theory there is an element corresponding to each element of reality. A sufficient condition for the reality of a physical quantity is the possibility of predicting it with certainty, without disturbing the system. In quantum mechanics in the case of two physical quantities described by non-commuting operators, the knowledge of one precludes the knowledge of the other. Then either (1) the description of reality given by the wave function in quantum mechanics is not complete or (2) these two quantities cannot have simultaneous reality. Consideration of the problem of making predictions concerning a system on the basis of measurements made on another system that had previously interacted with it leads to the result that if (1) is false then (2) is also false. One is thus led to conclude that the description of reality as given by a wave function is not complete.},
-  journal={Phys. Rev.},
-  volume={47},
-  issue={10},
-  pages={777--780},
-  numpages={0},
-  year={1935},
-  month={May},
-  publisher=aps,
-  doi={10.1103/PhysRev.47.777},
-  url={http://link.aps.org/doi/10.1103/PhysRev.47.777},
-  html={https://journals.aps.org/pr/abstract/10.1103/PhysRev.47.777},
-  pdf={example_pdf.pdf},
-  altmetric={248277},
-  dimensions={true},
-  selected={true}
+@inproceedings{mircea_2020_realtime-classification-geolocation,
+	title = {Real-time {Classification}, {Geolocation} and {Interactive} {Visualization} of {COVID}-19 {Information} {Shared} on {Social} {Media} to {Better} {Understand} {Global} {Developments}},
+	url = {https://aclanthology.org/2020.nlpcovid19-2.37},
+	doi = {10.18653/v1/2020.nlpcovid19-2.37},
+	abstract = {As people communicate on social media during COVID-19, it can be an invaluable source of useful and up-to-date information. However, the large volume and noise-to-signal ratio of social media can make this impractical. We present a prototype dashboard for the real-time classification, geolocation and interactive visualization of COVID-19 tweets that addresses these issues. We also describe a novel L2 classification layer that outperforms linear layers on a dataset of respiratory virus tweets.},
+	booktitle = {Proceedings of the 1st {Workshop} on {NLP} for {COVID}-19 ({Part} 2) at {EMNLP} 2020},
+	publisher = {Association for Computational Linguistics},
+	author = {Mircea, Andrei},
+	year = {2020},
+  pdf={paper_mircea_2020_realtime.pdf},
+  poster={poster_mircea_2020_realtime.pdf},
 }
 
-@article{einstein1905molekularkinetischen,
-  title={{\"U}ber die von der molekularkinetischen Theorie der W{\"a}rme geforderte Bewegung von in ruhenden Fl{\"u}ssigkeiten suspendierten Teilchen},
-  author={Einstein, A.},
-  journal={Annalen der physik},
-  volume={322},
-  number={8},
-  pages={549--560},
-  year={1905},
-  publisher={Wiley Online Library}
+@article{romascanu-etal_2020_using-deep-learning,
+	title = {Using deep learning and social network analysis to understand and manage extreme flooding},
+	volume = {28},
+	issn = {1468-5973},
+	url = {https://onlinelibrary.wiley.com/doi/abs/10.1111/1468-5973.12311},
+	doi = {10.1111/1468-5973.12311},
+	abstract = {Combining machine learning with social network analysis (SNA) can leverage vast amounts of social media data to better respond to crises. We present a case study using Twitter data from the March 2019 Nebraska floods in the United States, which caused over \$1 billion in damage in the state and widespread evacuations of residents. We use a subset of machine learning, deep learning (DL), to classify text content of 11,982 tweets, and we integrate that with SNA to understand the structure of tweet interactions. Our DL approach pre-trains our model with a DL language technique, BERT, and then trains the model using the standard training dataset to sort a dataset of tweets into classes tailored to crisis events. Several performance measures demonstrate that our two-tiered trained model improves domain adaptation and generalization across different extreme weather event types. This approach identifies the role of Twitter during the damage containment stage of the flood. Our SNA identifies accounts that function as primary sources of information on Twitter. Together, these two approaches help crisis managers filter large volumes of data and overcome challenges faced by simple statistical models and other computational techniques to provide useful information during crises like flooding.},
+	number = {3},
+	journal = {Journal of Contingencies and Crisis Management},
+	author = {Romascanu*, Andrei and Ker*, Hannah and Sieber, Renee and Greenidge, Sarah and Lumley, Sam and Bush, Drew and Morgan, Stefan and Zhao, Rosie and Brunila, Mikael},
+	year = {2020},
+	pages = {251--261},
+  pdf={paper_romascanu_2020_using.pdf}
 }
 
-@article{einstein1905movement,
-  abbr={Ann. Phys.},
-  title={Un the movement of small particles suspended in statiunary liquids required by the molecular-kinetic theory 0f heat},
-  author={Einstein, A.},
-  journal={Ann. Phys.},
-  volume={17},
-  pages={549--560},
-  year={1905}
+@inproceedings{mircea-cheung_2023_language-model-pretraining,
+	title = {Language {Model} {Pretraining} with {Lexical} {Semantics}},
+	abstract = {Lexical semantic relations (LSRs) characterize meaning relationships between words and play an important role in systematic generalization on lexical inference tasks. Notably, several tasks that require knowledge of hypernymy still pose a challenge for recent pretrained language models (LMs), underscoring the need to better align their linguistic behavior with our knowledge of LSRs. In this paper, we propose Balaur, a model that addresses this challenge by modeling LSRs directly in the LM's hidden states throughout pretraining. Motivating our approach is the hypothesis that the internal representations of LMs can provide an interface to their observable linguistic behavior, and that by controlling one we can influence the other. We validate our hypothesis and demonstrate that Balaur generally improves the performance of large transformer-based LMs on a comprehensive set of hypernymy-informed tasks, as well as on the original LM objective.},
+	author = {Mircea, Andrei and Cheung, Jackie Chi Kit},
+	booktitle = {submission to EMNLP 2023},
+  abbr = {Under Review},
+	year = {2023},
 }
 
-@article{einstein1905electrodynamics,
-  title={On the electrodynamics of moving bodies},
-  author={Einstein, A.},
-  year={1905}
+@inproceedings{mircea-etal_2023_humancentered-information-extraction,
+	title = {Human-{Centered} {Information} {Extraction} from {Scientific} {Publications}: {A} {Case} {Study} at the {Intersection} of {Additive} {Manufacturing} and {ML}},
+	abstract = {We present the development of an information extraction (IE) system with a focus on the human-centered considerations that went into it. Notably, the system is being developed with and for mechanical engineering researchers in a participatory fashion. Our objective is to understand and measure reproducibility gaps at the intersection of additive manufacturing and machine learning. To this end, we created a reproducibility checklist to be filled out for hundreds of scientific publications; and the goal of our IE system is to support us in this task. The IE system leverages retrieval-augmented language modeling with humans in the loop, emphasizing the human-centered considerations of trust by transparency and iterative improvement.},
+	author = {Mircea, Andrei and Safdar, Mutahar and Xie, Jiarui and Zhao, Yaoyao Fiona},
+	booktitle = {submission to WIESP 2023},
+  abbr = {Under Review},
+	year = {2023},
 }
 
-@book{przibram1967letters,
-  bibtex_show={true},
-  title={Letters on wave mechanics},
-  author={Einstein, Albert and Schrödinger, Erwin and Planck, Max and Lorentz, Hendrik Antoon and Przibram, Karl},
-  year={1967},
-  publisher={Vision},
-  preview={wave-mechanics.gif}
-}
+
+
+
+
+
