@@ -6,9 +6,9 @@ title: blank # the website title (if blank, full name will be used instead)
 first_name: Andrei
 middle_name:
 last_name: Mircea
-email: mirandrom@pm.me
+email:  # your email address
 description: > # the ">" symbol means to ignore newlines until "footer_text:"
-  Description.
+  Personal webpage of Andrei Mircea
 footer_text: >
   Based on <a href="https://github.com/alshedivat/al-folio">al-folio</a> theme.
 keywords: mirandrom  # add your own keywords or leave empty

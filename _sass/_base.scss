@@ -17,6 +17,7 @@ li,
 span,
 strong {
   color: var(--global-text-color);
+  font-family: 'Work Sans', sans-serif;
 }
 
 hr {
@@ -121,16 +122,17 @@ blockquote {
 
 .profile {
   width: 100%;
+}
 
-  .more-info {
-    margin-bottom: 5px;
-    margin-top: 5px;
-    font-family: monospace;
-
-    p {
-      display: inline-block;
-      margin: 0;
-    }
+.more-info {
+  margin-bottom: 5px;
+  margin-top: 0px;
+  font-family: monospace;
+  text-align: center;
+  
+  p {
+    display: inline-block;
+    margin: 0;
   }
 }
 
@@ -168,6 +170,13 @@ blockquote {
   }
 }
 
+.about-description {
+  margin-top: 0rem;
+  margin-bottom: 2rem;
+  font-size: 1rem;  
+  font-weight: lighter;
+  color: var(--global-text-color-light);
+}
 
 // Navbar customization
 
@@ -310,7 +319,7 @@ blockquote {
   text-align: center;
 
   .contact-icons {
-    font-size: 4rem;
+    font-size: 2rem;
 
     a {
       i::before {
@@ -459,9 +468,22 @@ footer.sticky-bottom {
 }
 
 .post-title {
+  color: var(--global-title-color);
+  font-size: 2rem;
+  margin-top: 0em;
+  margin-bottom: 0em;
+  font-weight: bolder;
   mjx-container[jax="CHTML"][display="true"] {
     display: unset;
   }
+}
+
+.about-title {
+  color: var(--global-title-color);
+  font-size: 2rem;
+  margin-top: 0em;
+  margin-bottom: 0em;
+  font-weight: bolder;
 }
 
 .post-list {
