@@ -1,0 +1,1999 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+
+    <title></title>
+    <link rel="stylesheet" href="dist/reveal.css" />
+    <link rel="stylesheet" href="css/custom.css" id="theme" />
+    <link rel="stylesheet" href="plugin/highlight/zenburn.css" />
+	<link rel="stylesheet" href="css/layout.css" />
+	<link rel="stylesheet" href="plugin/customcontrols/style.css">
+
+
+
+    <script defer src="dist/fontawesome/all.min.js"></script>
+
+	<script type="text/javascript">
+		var forgetPop = true;
+		function onPopState(event) {
+			if(forgetPop){
+				forgetPop = false;
+			} else {
+				parent.postMessage(event.target.location.href, "app://obsidian.md");
+			}
+        }
+		window.onpopstate = onPopState;
+		window.onmessage = event => {
+			if(event.data == "reload"){
+				window.document.location.reload();
+			}
+			forgetPop = true;
+		}
+
+		function fitElements(){
+			const itemsToFit = document.getElementsByClassName('fitText');
+			for (const item in itemsToFit) {
+				if (Object.hasOwnProperty.call(itemsToFit, item)) {
+					var element = itemsToFit[item];
+					fitElement(element,1, 1000);
+					element.classList.remove('fitText');
+				}
+			}
+		}
+
+		function fitElement(element, start, end){
+
+			let size = (end + start) / 2;
+			element.style.fontSize = `${size}px`;
+
+			if(Math.abs(start - end) < 1){
+				while(element.scrollHeight > element.offsetHeight){
+					size--;
+					element.style.fontSize = `${size}px`;
+				}
+				return;
+			}
+
+			if(element.scrollHeight > element.offsetHeight){
+				fitElement(element, start, size);
+			} else {
+				fitElement(element, size, end);
+			}		
+		}
+
+
+		document.onreadystatechange = () => {
+			fitElements();
+			if (document.readyState === 'complete') {
+				if (window.location.href.indexOf("?export") != -1){
+					parent.postMessage(event.target.location.href, "app://obsidian.md");
+				}
+				if (window.location.href.indexOf("print-pdf") != -1){
+					let stateCheck = setInterval(() => {
+						clearInterval(stateCheck);
+						window.print();
+					}, 250);
+				}
+			}
+	};
+
+
+        </script>
+  </head>
+  <body>
+    <div class="reveal">
+      <div class="slides"><section  data-markdown><script type="text/template"><!-- .slide: class="drop" -->
+<div class="" style="position: absolute; left: 0px; top: 0px; height: 1200px; width: 1920px; min-height: 1200px; display: flex; flex-direction: column; align-items: center; justify-content: center" absolute="true">
+
+<div class="has-dark-background" style="background-color: #69696969; padding: 0 0  0 0; box-sizing: border-box; position: absolute; left: 10%; top: 10%; height: 40%; width: 80%; display: flex; flex-direction: column; align-items: center; justify-content: center" align="center">
+
+
+# Maximal Update Parameterization<!-- .element: style="font-size: 64px" -->
+
+(or feature learning in infinite-width neural networks)
+<!-- .element: style="font-size: 32px" -->
+</div>
+</div></script></section><section  data-markdown><script type="text/template"><!-- .slide: class="drop" -->
+<div class="" style="position: absolute; left: 0px; top: 0px; height: 1200px; width: 1920px; min-height: 1200px; display: flex; flex-direction: column; align-items: center; justify-content: center" absolute="true">
+
+<div class="has-dark-background" style="background-color: #69696969; padding: 20px; box-sizing: border-box; position: absolute; left: 15%; top: 5%; height: 90%; width: 70%; display: flex; flex-direction: column; align-items: flex-start; justify-content: flex-start" align="left">
+
+## Outline
+ 
+1. <mark>motivation</mark>: leveraging scaling requires understanding it 
+	1. **claim**: continued progress in deep learning is contingent on scaling; 
+	2. **challenge**: making scaling work is *hard*, more alchemy than science;
+	3. **value prop**:  theory-driven insights make optimal scaling tractable;
+	   
+2. <mark>toy problem</mark>: scaling the width of a single linear layer: 
+	1. **setting the stage**: notation and forward/backward computations;
+	2. **problem # 1**: scaling width leads to *preactivation instability*;
+	3. **problem # 2**: correlations after gradient updates change scaling behavior;
+	4. **problem # 3**: naively adjusting for problem # 2 leads to *lack of feature learning*;
+	6. **solution**: a sketch of maximal update parametrization
+	   
+3. <mark>zooming out</mark>: generalizing toy problem to general constraints
+4.  <mark>further reading</mark>:  overview of tensor programs (4-6)
+</div>
+</div></script></section><section ><section data-markdown><script type="text/template"><!-- .slide: class="drop" -->
+<div class="" style="position: absolute; left: 0px; top: 0px; height: 1200px; width: 1920px; min-height: 1200px; display: flex; flex-direction: column; align-items: center; justify-content: center" absolute="true">
+
+# Motivation
+
+leveraging scaling requires understanding it
+</div></script></section><section data-markdown><script type="text/template"><!-- .slide: class="drop" -->
+<div class="" style="position: absolute; left: 0px; top: 0px; height: 1200px; width: 1920px; min-height: 1200px; display: flex; flex-direction: column; align-items: center; justify-content: center" absolute="true">
+
+## Claim
+
+continued progress in deep learning is contingent on scaling
+</div></script></section><section data-markdown><script type="text/template"><!-- .slide: class="drop" -->
+<div class="" style="position: absolute; left: 0px; top: 0px; height: 1200px; width: 1920px; min-height: 1200px; display: flex; flex-direction: column; align-items: center; justify-content: center" absolute="true">
+
+<div class="" style="padding: 10px 10px 10px 10px; box-sizing: border-box; position: absolute; left: 0%; top: 0%; height: 10%; width: 100%; display: flex; flex-direction: column; align-items: center; justify-content: flex-end" align="bottom">
+
+ <div class="block">
+
+### Scale is ~~all~~ something you ~~need~~ want
+</div>
+
+ 
+</div>
+
+<div class="" style="padding: 10px 10px 10px 10px; box-sizing: border-box; position: absolute; left: 0%; top: 10%; height: 85%; width: 100%; display: flex; flex-direction: column; align-items: center; justify-content: flex-start" align="top">
+
+ 
+
+More parameters, more training data, more compute typically lead to improved performance; all else being equal. 
+<img src="msc/IFT 6760 W24 Presentation/attachments/bnsl.png" alt="" style="object-fit: scale-down">
+
+
+
+ 
+</div>
+
+<div class="" style="padding: 10px 10px 10px 10px; box-sizing: border-box; position: absolute; left: 0%; top: 95%; height: 5%; width: 100%; display: flex; flex-direction: column; align-items: flex-end; justify-content: flex-end" align="right">
+
+<div class="block">
+
+[On Scaling Laws, Foundation Models and HPC](https://docs.google.com/presentation/d/1g48aqrnbAjVpq2qh-whRMFqrBC3o7tdZBR7LoHNPSHg/edit?usp=sharing)
+</div>
+
+
+
+</div>
+</div></script></section><section data-markdown><script type="text/template"><!-- .slide: class="drop" -->
+<div class="" style="position: absolute; left: 0px; top: 0px; height: 1200px; width: 1920px; min-height: 1200px; display: flex; flex-direction: column; align-items: center; justify-content: center" absolute="true">
+
+## Challenge
+
+making scaling work is _hard_, more alchemy than science;
+</div></script></section><section data-markdown><script type="text/template"><!-- .slide: class="drop" -->
+<div class="" style="position: absolute; left: 0px; top: 0px; height: 1200px; width: 1920px; min-height: 1200px; display: flex; flex-direction: column; align-items: center; justify-content: center" absolute="true">
+
+<div class="" style="padding: 10px 10px 10px 10px; box-sizing: border-box; position: absolute; left: 0%; top: 0%; height: 10%; width: 100%; display: flex; flex-direction: column; align-items: center; justify-content: flex-end" align="bottom">
+
+ <div class="block">
+
+### Scaling up is alchemy
+</div>
+
+ 
+</div>
+
+<div class="" style="padding: 10px 10px 10px 10px; box-sizing: border-box; position: absolute; left: 0%; top: 10%; height: 85%; width: 100%; display: flex; flex-direction: column; align-items: center; justify-content: flex-start" align="top">
+
+ 
+
+The pretraining saga of the OPT suite of language models.
+
+-|-
+<img src="msc/IFT 6760 W24 Presentation/attachments/opt_1.png" alt="" style="width: 700px; object-fit: fill">
+<img src="msc/IFT 6760 W24 Presentation/attachments/opt_2.png" alt="" style="width: 700px; object-fit: fill">
+
+-|-
+<img src="msc/IFT 6760 W24 Presentation/attachments/opt_3.png" alt="" style="width: 700px; object-fit: fill">
+<img src="msc/IFT 6760 W24 Presentation/attachments/opt_4.png" alt="" style="width: 700px; object-fit: fill">
+
+
+
+ 
+</div>
+
+<div class="" style="padding: 10px 10px 10px 10px; box-sizing: border-box; position: absolute; left: 0%; top: 95%; height: 5%; width: 100%; display: flex; flex-direction: column; align-items: flex-end; justify-content: flex-end" align="right">
+
+<div class="block">
+
+[Open Pretrained Transformers - Susan Zhang | Stanford MLSys #77 ](https://www.youtube.com/watch?v=p9IxoSkvZ-M)
+</div>
+
+
+
+</div>
+</div></script></section><section data-markdown><script type="text/template"><!-- .slide: class="drop" -->
+<div class="" style="position: absolute; left: 0px; top: 0px; height: 1200px; width: 1920px; min-height: 1200px; display: flex; flex-direction: column; align-items: center; justify-content: center" absolute="true">
+
+<div class="" style="padding: 10px 10px 10px 10px; box-sizing: border-box; position: absolute; left: 0%; top: 0%; height: 10%; width: 100%; display: flex; flex-direction: column; align-items: center; justify-content: flex-end" align="bottom">
+
+ <div class="block">
+
+### Scaling up is difficult and messy
+</div>
+
+ 
+</div>
+
+<div class="" style="padding: 10px 10px 10px 10px; box-sizing: border-box; position: absolute; left: 0%; top: 10%; height: 85%; width: 100%; display: flex; flex-direction: column; align-items: center; justify-content: flex-start" align="top">
+
+ 
+
+
+In the end, OPT mostly reverted to megatron defaults and "empirical learning rate schedulers".   
+
+<img src="msc/IFT 6760 W24 Presentation/attachments/opt_5.png" alt="" style="object-fit: scale-down">
+
+
+[Chronicles of OPT development](https://github.com/facebookresearch/metaseq/blob/main/projects/OPT/chronicles/README.md) were an invaluable contribution to open source development.
+
+ But surely there must be a better way.
+
+
+ 
+</div>
+
+<div class="" style="padding: 10px 10px 10px 10px; box-sizing: border-box; position: absolute; left: 0%; top: 95%; height: 5%; width: 100%; display: flex; flex-direction: column; align-items: flex-end; justify-content: flex-end" align="right">
+
+<div class="block">
+
+[Open Pretrained Transformers - Susan Zhang | Stanford MLSys #77 ](https://www.youtube.com/watch?v=p9IxoSkvZ-M)
+</div>
+
+
+
+</div>
+</div></script></section><section data-markdown><script type="text/template"><!-- .slide: class="drop" -->
+<div class="" style="position: absolute; left: 0px; top: 0px; height: 1200px; width: 1920px; min-height: 1200px; display: flex; flex-direction: column; align-items: center; justify-content: center" absolute="true">
+
+## Value proposition
+
+theory-driven insights make optimal scaling tractable
+</div></script></section><section data-markdown><script type="text/template"><!-- .slide: class="drop" -->
+<div class="" style="position: absolute; left: 0px; top: 0px; height: 1200px; width: 1920px; min-height: 1200px; display: flex; flex-direction: column; align-items: center; justify-content: center" absolute="true">
+
+<div class="" style="padding: 10px 10px 10px 10px; box-sizing: border-box; position: absolute; left: 0%; top: 0%; height: 10%; width: 100%; display: flex; flex-direction: column; align-items: center; justify-content: flex-end" align="bottom">
+
+ <div class="block">
+
+### Economies of scale for theoretical vs. empirical insights
+</div>
+
+ 
+</div>
+
+<div class="" style="padding: 10px 10px 10px 10px; box-sizing: border-box; position: absolute; left: 0%; top: 10%; height: 85%; width: 100%; display: flex; flex-direction: column; align-items: center; justify-content: flex-start" align="top">
+
+ 
+
+
+<img src="msc/IFT 6760 W24 Presentation/attachments/gyang_economies.png" alt="" style="width: 1600px; object-fit: fill">
+
+
+
+ 
+</div>
+
+<div class="" style="padding: 10px 10px 10px 10px; box-sizing: border-box; position: absolute; left: 0%; top: 95%; height: 5%; width: 100%; display: flex; flex-direction: column; align-items: flex-end; justify-content: flex-end" align="right">
+
+<div class="block">
+
+[ Greg Yang: The unreasonable effectiveness of mathematics in large scale deep learning](https://www.youtube.com/watch?v=_p0S_zZd4NQ)
+</div>
+
+
+
+</div>
+</div></script></section><section data-markdown><script type="text/template"><!-- .slide: class="drop" -->
+<div class="" style="position: absolute; left: 0px; top: 0px; height: 1200px; width: 1920px; min-height: 1200px; display: flex; flex-direction: column; align-items: center; justify-content: center" absolute="true">
+
+<div class="" style="padding: 10px 10px 10px 10px; box-sizing: border-box; position: absolute; left: 0%; top: 0%; height: 10%; width: 100%; display: flex; flex-direction: column; align-items: center; justify-content: flex-end" align="bottom">
+
+ <div class="block">
+
+### Analogy: soviet astronaut ascent in a Newtonless alternate future
+</div>
+
+ 
+</div>
+
+<div class="" style="padding: 10px 10px 10px 10px; box-sizing: border-box; position: absolute; left: 0%; top: 10%; height: 85%; width: 100%; display: flex; flex-direction: column; align-items: center; justify-content: flex-start" align="top">
+
+ 
+
+
+<img src="msc/IFT 6760 W24 Presentation/attachments/gyang_soviets-to-the-moon.png" alt="" style="width: 1300px; object-fit: fill">
+
+
+Hypothesis: there exist optimal hyperparameters which are "universal" like Newton's gravitational constant. 
+
+We just need the right theoretical/mathematical insight to formulate the problem in a "scale-invariant" way. 
+
+
+ 
+</div>
+
+<div class="" style="padding: 10px 10px 10px 10px; box-sizing: border-box; position: absolute; left: 0%; top: 95%; height: 5%; width: 100%; display: flex; flex-direction: column; align-items: flex-end; justify-content: flex-end" align="right">
+
+<div class="block">
+
+[ Greg Yang: The unreasonable effectiveness of mathematics in large scale deep learning](https://www.youtube.com/watch?v=_p0S_zZd4NQ)
+</div>
+
+
+
+</div>
+</div></script></section><section data-markdown><script type="text/template"><!-- .slide: class="drop" -->
+<div class="" style="position: absolute; left: 0px; top: 0px; height: 1200px; width: 1920px; min-height: 1200px; display: flex; flex-direction: column; align-items: center; justify-content: center" absolute="true">
+
+<div class="" style="padding: 10px 10px 10px 10px; box-sizing: border-box; position: absolute; left: 0%; top: 0%; height: 10%; width: 100%; display: flex; flex-direction: column; align-items: center; justify-content: flex-end" align="bottom">
+
+ <div class="block">
+
+### Optimal scaling thesis
+</div>
+
+ 
+</div>
+
+<div class="" style="padding: 10px 10px 10px 10px; box-sizing: border-box; position: absolute; left: 0%; top: 10%; height: 85%; width: 100%; display: flex; flex-direction: column; align-items: center; justify-content: flex-start" align="top">
+
+ 
+
+> "connects infinite-size limits for general notions of "size" to the optimal design of large models in practice, illustrating a way for theory to reliably guide the future of AI."
+
+- Parametrize scaling of hyperparameters with respect to scaled dimension:
+-  (e.g. learning rate and weight initialization when scaling width)
+<img src="msc/IFT 6760 W24 Presentation/attachments/gyang_hp-parametrization.png" alt="" style="width: 1000px; object-fit: fill">
+
+- If hyperparameter scaling is theoretically sub-optimal in the infinite limit: 
+	- tuned hyperparameters may seem optimal at small scales;
+	- however, at large enough scales they become sub-optimal;
+- If hyperparameter scaling is theoretically stable/optimal in the infinite limit:
+	- tuned hyperparameters should transfer stably across model scales;
+	- claims of optimality are made but beyond my understanding
+
+
+ 
+</div>
+
+<div class="" style="padding: 10px 10px 10px 10px; box-sizing: border-box; position: absolute; left: 0%; top: 95%; height: 5%; width: 100%; display: flex; flex-direction: column; align-items: flex-end; justify-content: flex-end" align="right">
+
+<div class="block">
+
+[ Greg Yang: The unreasonable effectiveness of mathematics in large scale deep learning](https://www.youtube.com/watch?v=_p0S_zZd4NQ)
+</div>
+
+
+
+</div>
+</div></script></section></section><section ><section data-markdown><script type="text/template"><!-- .slide: class="drop" -->
+<div class="" style="position: absolute; left: 0px; top: 0px; height: 1200px; width: 1920px; min-height: 1200px; display: flex; flex-direction: column; align-items: center; justify-content: center" absolute="true">
+
+# Toy (but illustrative) problem 
+
+scaling the width of a single linear layer
+</div></script></section><section data-markdown><script type="text/template"><!-- .slide: class="drop" -->
+<div class="" style="position: absolute; left: 0px; top: 0px; height: 1200px; width: 1920px; min-height: 1200px; display: flex; flex-direction: column; align-items: center; justify-content: center" absolute="true">
+
+## setting the stage 
+
+notation and forward/backward computations;
+</div></script></section><section data-markdown><script type="text/template"><!-- .slide: class="drop" -->
+<div class="" style="position: absolute; left: 0px; top: 0px; height: 1200px; width: 1920px; min-height: 1200px; display: flex; flex-direction: column; align-items: center; justify-content: center" absolute="true">
+
+<div class="" style="padding: 10px 10px 10px 10px; box-sizing: border-box; position: absolute; left: 0%; top: 0%; height: 10%; width: 100%; display: flex; flex-direction: column; align-items: center; justify-content: flex-end" align="bottom">
+
+ <div class="block">
+
+### the humble `$(d_{out} \times d_{in})$` linear layer
+</div>
+
+ 
+</div>
+
+<div class="" style="padding: 10px 10px 10px 10px; box-sizing: border-box; position: absolute; left: 0%; top: 10%; height: 85%; width: 100%; display: flex; flex-direction: column; align-items: center; justify-content: flex-start" align="top">
+
+ 
+
+
+
+<div class="" style="font-size: 32px; position: absolute; left: 5%; top: 5%; height: 40%; width: 45%; display: flex; flex-direction: column; align-items: flex-start; justify-content: flex-start" align="left">
+
+<div class="callout callout-color1">
+<div class="callout-title">
+<div class="callout-icon">
+
+<i class="fas fa-info-circle" ></i>
+
+
+</div>
+<div class="callout-title-inner">
+
+Forward pass (preactivation computation)
+
+</div>
+</div>
+<div class="callout-content">
+
+- **Vector-wise:** `$h = W x + b$`
+
+- **Element-wise:** `$h_{i} = \sum_{j}^{d_{in}} \: (W_{ij} \: x_{j}) + b_{i}$`
+
+- **Loss function:** `$L = f(h)$` for some function `$f$`
+
+</div>
+</div>
+<!-- .element: style="width: 100%" -->
+</div>
+
+<div class="" style="font-size: 32px; position: absolute; left: 5%; top: 50%; height: 40%; width: 45%; display: flex; flex-direction: column; align-items: flex-start; justify-content: flex-start" align="left">
+
+<div class="callout callout-color1">
+<div class="callout-title">
+<div class="callout-icon">
+
+<i class="fas fa-info-circle" ></i>
+
+
+</div>
+<div class="callout-title-inner">
+
+Backward pass (gradient computation)
+
+</div>
+</div>
+<div class="callout-content">
+
+- **Outputs:** `$\nabla h = \frac{dL}{dh_{i}}$` (assume known)
+
+- **Weights:** `$\nabla W_{ij} = \frac{dL}{dh_{i}} \frac{dh_{i}}{dW_{ij}} = \nabla h_{i} \: x_j$`
+
+- **Bias:**  `$\nabla b_{i} = \frac{dL}{dh_{i}} \frac{dh_{i}}{db_{i}} = \nabla h_{i}$`
+
+- **Input:** `$\nabla x_{j} = \sum_{i}^{d_{out}} \:  \frac{dL}{dh_{i}} \frac{dh_{i}}{dx_{j}} = \sum_{i}^{d_{out}} \: \nabla h_{i} \: W_{ij} $`
+
+</div>
+</div>
+<!-- .element: style="width: 100%" -->
+</div>
+
+<div class="" style="font-size: 24px; position: absolute; left: 55%; top: 5%; height: 40%; width: 40%; display: flex; flex-direction: column; align-items: flex-start; justify-content: flex-start" align="left">
+
+<div class="callout callout-color8">
+<div class="callout-title">
+<div class="callout-icon">
+
+<i class="fas fa-list" ></i>
+
+
+</div>
+<div class="callout-title-inner">
+
+Notation
+
+</div>
+</div>
+<div class="callout-content">
+
+- `$W$` is the `$(d_{out} \times d_{in})$` weight matrix of the layer;
+
+- `$h$` is the `$d_{out}$` vector of "preactivations" output by the layer;
+
+- `$x$` is the `$d_{in}$` vector of features input to the layer;
+
+- `$b$` is the `$d_{out}$`-dimensional bias vector of the layer;
+
+</div>
+</div>
+<!-- .element: style="width: 100%" -->
+</div>
+
+<div class="" style="font-size: 24px; position: absolute; left: 55%; top: 50%; height: 40%; width: 40%; display: flex; flex-direction: column; align-items: flex-start; justify-content: flex-start" align="left">
+
+<div class="callout callout-color5">
+<div class="callout-title">
+<div class="callout-icon">
+
+<i class="fas fa-exclamation-triangle" ></i>
+
+
+</div>
+<div class="callout-title-inner">
+
+Question you should be asking yourself
+
+</div>
+</div>
+<div class="callout-content">
+
+- `$h_{i}$` is a sum of `$d_{in}$` terms.
+
+- `$\nabla x_{j}$`  is a sum of `$d_{out}$` terms.
+
+- **What happens when `$d_{in}$` or `$d_{out}$` grow?**
+
+</div>
+</div>
+<!-- .element: style="width: 100%" -->
+</div>
+ 
+</div>
+
+<div class="" style="padding: 10px 10px 10px 10px; box-sizing: border-box; position: absolute; left: 0%; top: 95%; height: 5%; width: 100%; display: flex; flex-direction: column; align-items: flex-end; justify-content: flex-end" align="right">
+
+
+</div>
+</div></script></section><section data-markdown><script type="text/template"><!-- .slide: class="drop" -->
+<div class="" style="position: absolute; left: 0px; top: 0px; height: 1200px; width: 1920px; min-height: 1200px; display: flex; flex-direction: column; align-items: center; justify-content: center" absolute="true">
+
+<div class="" style="padding: 10px 10px 10px 10px; box-sizing: border-box; position: absolute; left: 0%; top: 0%; height: 10%; width: 100%; display: flex; flex-direction: column; align-items: center; justify-content: flex-end" align="bottom">
+
+ <div class="block">
+
+### aside on `$d_{out}$`, `$d_{in}$` and neural network width `$n$`
+</div>
+
+ 
+</div>
+
+<div class="" style="padding: 10px 10px 10px 10px; box-sizing: border-box; position: absolute; left: 0%; top: 10%; height: 85%; width: 100%; display: flex; flex-direction: column; align-items: center; justify-content: flex-start" align="top">
+
+ 
+
+
+<div class="" style="font-size: 32px; position: absolute; left: 25%; top: 20%; height: 40%; width: 50%; display: flex; flex-direction: column; align-items: flex-start; justify-content: flex-start" align="left">
+
+Typically (and throughout this presentation) we assume:
+
+- Input or embedding layers are `$n \times d_{in}$` <br> 
+  (where `$d_{in}$` is the data input dimensionality).
+
+- Hidden layers are `$n \times n$` <br> 
+  (where `$n$` is the model width or hidden dimensionality).
+
+- Output or unembedding layers are `$d_{out} \times n$` <br>
+  (where `$d_{out}$` is the data output dimensionality) 
+</div>
+
+ 
+</div>
+
+<div class="" style="padding: 10px 10px 10px 10px; box-sizing: border-box; position: absolute; left: 0%; top: 95%; height: 5%; width: 100%; display: flex; flex-direction: column; align-items: flex-end; justify-content: flex-end" align="right">
+
+
+</div>
+</div></script></section><section data-markdown><script type="text/template"><!-- .slide: class="drop" -->
+<div class="" style="position: absolute; left: 0px; top: 0px; height: 1200px; width: 1920px; min-height: 1200px; display: flex; flex-direction: column; align-items: center; justify-content: center" absolute="true">
+
+## problem # 1
+
+scaling width leads to _preactivation instability_
+</div></script></section><section data-markdown><script type="text/template"><!-- .slide: class="drop" -->
+<div class="" style="position: absolute; left: 0px; top: 0px; height: 1200px; width: 1920px; min-height: 1200px; display: flex; flex-direction: column; align-items: center; justify-content: center" absolute="true">
+
+<div class="" style="padding: 10px 10px 10px 10px; box-sizing: border-box; position: absolute; left: 0%; top: 0%; height: 10%; width: 100%; display: flex; flex-direction: column; align-items: center; justify-content: flex-end" align="bottom">
+
+ <div class="block">
+
+### how do preactivations `$h_{i}$` scale in the infinite width limit? 
+</div>
+
+ 
+</div>
+
+<div class="" style="padding: 10px 10px 10px 10px; box-sizing: border-box; position: absolute; left: 0%; top: 10%; height: 85%; width: 100%; display: flex; flex-direction: column; align-items: center; justify-content: flex-start" align="top">
+
+ 
+
+
+What happens to:  `$\quad h_{i} = \sum_{j}^{n} \: W_{ij} \: x_{j} \quad \text{as} \quad n \rightarrow \infty$` 
+
+when:  `$\quad W_{ij} \sim \mathcal{N}(0,1) \quad \text{and} \quad x_{j}  \sim \mathcal{N}(0,1)$` 
+
+(i.e. at initialization)
+
+<img src="msc/IFT 6760 W24 Presentation/attachments/plot_clt-percentiles.png" alt="" style="width: 1200px; object-fit: fill">
+
+
+The mean of `$h_{i}$` remains `$\sim 0$` its the variance explodes with `$n$`
+ 
+</div>
+
+<div class="" style="padding: 10px 10px 10px 10px; box-sizing: border-box; position: absolute; left: 0%; top: 95%; height: 5%; width: 100%; display: flex; flex-direction: column; align-items: flex-end; justify-content: flex-end" align="right">
+
+
+</div>
+</div></script></section><section data-markdown><script type="text/template"><!-- .slide: class="drop" -->
+<div class="" style="position: absolute; left: 0px; top: 0px; height: 1200px; width: 1920px; min-height: 1200px; display: flex; flex-direction: column; align-items: center; justify-content: center" absolute="true">
+
+<div class="" style="padding: 10px 10px 10px 10px; box-sizing: border-box; position: absolute; left: 0%; top: 0%; height: 10%; width: 100%; display: flex; flex-direction: column; align-items: center; justify-content: flex-end" align="bottom">
+
+ <div class="block">
+
+### the standard deviation of `$h_i$` scales with `$\sqrt{n}$`
+</div>
+
+ 
+</div>
+
+<div class="" style="padding: 10px 10px 10px 10px; box-sizing: border-box; position: absolute; left: 0%; top: 10%; height: 85%; width: 100%; display: flex; flex-direction: column; align-items: center; justify-content: flex-start" align="top">
+
+ 
+
+This is a problem. Why? 
+
+<img src="msc/IFT 6760 W24 Presentation/attachments/plot_clt-std-scaling.png" alt="" style="width: 1000px; object-fit: fill">
+
+
+ 
+</div>
+
+<div class="" style="padding: 10px 10px 10px 10px; box-sizing: border-box; position: absolute; left: 0%; top: 95%; height: 5%; width: 100%; display: flex; flex-direction: column; align-items: flex-end; justify-content: flex-end" align="right">
+
+
+</div>
+</div>
+
+<aside class="notes"><p>extreme case, numerical instability (compounded in multi-layer). More generally, vanishing gradient for saturating non-linear activations; and exploding gradients for unbounded activations (where the next layer&#39;s <code>$x_{j}$</code> (and therefore <code>$\nabla W_{ij}$</code>) is proportional <code>$h_{j}$</code>).</p>
+</aside></script></section><section data-markdown><script type="text/template"><!-- .slide: class="drop" -->
+<div class="" style="position: absolute; left: 0px; top: 0px; height: 1200px; width: 1920px; min-height: 1200px; display: flex; flex-direction: column; align-items: center; justify-content: center" absolute="true">
+
+<div class="" style="padding: 10px 10px 10px 10px; box-sizing: border-box; position: absolute; left: 0%; top: 0%; height: 10%; width: 100%; display: flex; flex-direction: column; align-items: center; justify-content: flex-end" align="bottom">
+
+ <div class="block">
+
+### solution: scale `$W_{ij}$`  (hyperparameter # 1)
+</div>
+
+ 
+</div>
+
+<div class="" style="padding: 10px 10px 10px 10px; box-sizing: border-box; position: absolute; left: 0%; top: 10%; height: 85%; width: 100%; display: flex; flex-direction: column; align-items: center; justify-content: flex-start" align="top">
+
+ 
+
+
+We can prevent `$h_i$` instability by scaling `$W_{ij}$` to have `$O(n^{1/2})$` standard deviation. 
+
+This is the crux of "Standard Parametrization" (e.g. kaiming or xavier initialization).
+
+<img src="msc/IFT 6760 W24 Presentation/attachments/plot_clt-adjusted-percentiles.png" alt="" style="width: 1200px; object-fit: fill">
+
+
+Alternatively, can use a static multiplier parameter `$m \propto n^{-1/2}$` where `$h = (m \: W) \: x + b$`
+ 
+</div>
+
+<div class="" style="padding: 10px 10px 10px 10px; box-sizing: border-box; position: absolute; left: 0%; top: 95%; height: 5%; width: 100%; display: flex; flex-direction: column; align-items: flex-end; justify-content: flex-end" align="right">
+
+
+</div>
+</div></script></section><section data-markdown><script type="text/template"><!-- .slide: class="drop" -->
+<div class="" style="position: absolute; left: 0px; top: 0px; height: 1200px; width: 1920px; min-height: 1200px; display: flex; flex-direction: column; align-items: center; justify-content: center" absolute="true">
+
+## problem # 2
+
+ correlations after gradient updates change scaling behavior;
+</div></script></section><section data-markdown><script type="text/template"><!-- .slide: class="drop" -->
+<div class="" style="position: absolute; left: 0px; top: 0px; height: 1200px; width: 1920px; min-height: 1200px; display: flex; flex-direction: column; align-items: center; justify-content: center" absolute="true">
+
+<div class="" style="padding: 10px 10px 10px 10px; box-sizing: border-box; position: absolute; left: 0%; top: 0%; height: 10%; width: 100%; display: flex; flex-direction: column; align-items: center; justify-content: flex-end" align="bottom">
+
+ <div class="block">
+
+### when `$W_{ij}$` and `$x_j$` are uncorrelated, the std of `$h_i$` scales with `$\sqrt{n}$` by CLT
+</div>
+
+ 
+</div>
+
+<div class="" style="padding: 10px 10px 10px 10px; box-sizing: border-box; position: absolute; left: 0%; top: 10%; height: 85%; width: 100%; display: flex; flex-direction: column; align-items: center; justify-content: flex-start" align="top">
+
+ 
+
+
+
+<div class="" style="font-size: 28px; padding: 10px 30px 10px 30px; box-sizing: border-box; display: flex; flex-direction: column; align-items: center; justify-content: space-evenly" align="justify">
+
+<div class="callout callout-color1">
+<div class="callout-title">
+<div class="callout-icon">
+
+<i class="fas fa-info-circle" ></i>
+
+
+</div>
+<div class="callout-title-inner">
+
+Central limit theorem (CLT) scaling
+
+</div>
+</div>
+<div class="callout-content">
+
+When `$W_{ij}$` and `$x_j$` are uncorrelated and zero-mean (i,e, at intialization):
+
+- `$\mu = \mathrm{E}[W_{ij}x_j] = 0, \quad \sigma^{2} = \mathrm{Var}[W_{ij}x_j]= \mathrm{Var}[W_{ij}] \: \mathrm{Var}[x_j]$`
+
+- **by CLT:** `$\quad \frac{1}{\sqrt{n}} \sum_{j}^{n} W_{ij}x_j \to \mathcal{N}(0, \sigma^2) \quad \text{as} \; n \to \infty$`
+
+***************
+
+`$\quad \therefore \mathrm{Var}[h_{i}] \to n \cdot \mathrm{Var}[W_{ij}] \: \mathrm{Var}[x_j] \quad \text{as} \; n \to \infty$`.
+
+</div>
+</div>
+</div>
+<!-- .element: style="width: 80%" -->
+
+To ensure `$\mathrm{Var}[h_{i}]$` is stable, i.e. `$O(1)$`; we must ensure `$\mathrm{Var}[W_{ij}]$` is `$O(n^{-1})$`. Equivalently, we ensure `$W$` has `$O(n^{-1/2})$` standard deviation.
+<!-- .element: style="width: 60%" -->
+
+We could also adjust `$\mathrm{Var}[x_{j}]$` , but that's a can of worms best to avoid for now. We'll instead assume as in the original papers that all layer inputs and outputs should be `$O(1)$` throughout training.
+<!-- .element: style="width: 60%" -->
+ 
+</div>
+
+<div class="" style="padding: 10px 10px 10px 10px; box-sizing: border-box; position: absolute; left: 0%; top: 95%; height: 5%; width: 100%; display: flex; flex-direction: column; align-items: flex-end; justify-content: flex-end" align="right">
+
+
+</div>
+</div></script></section><section data-markdown><script type="text/template"><!-- .slide: class="drop" -->
+<div class="" style="position: absolute; left: 0px; top: 0px; height: 1200px; width: 1920px; min-height: 1200px; display: flex; flex-direction: column; align-items: center; justify-content: center" absolute="true">
+
+<div class="" style="padding: 10px 10px 10px 10px; box-sizing: border-box; position: absolute; left: 0%; top: 0%; height: 10%; width: 100%; display: flex; flex-direction: column; align-items: center; justify-content: flex-end" align="bottom">
+
+ <div class="block">
+
+### when `$W_{ij}$` and `$x_j$` are correlated, the mean of `$h_i$` scales with `$n$` by LLN
+</div>
+
+ 
+</div>
+
+<div class="" style="padding: 10px 10px 10px 10px; box-sizing: border-box; position: absolute; left: 0%; top: 10%; height: 85%; width: 100%; display: flex; flex-direction: column; align-items: center; justify-content: flex-start" align="top">
+
+ 
+
+
+
+<div class="" style="font-size: 28px; padding: 10px 30px 10px 30px; box-sizing: border-box; display: flex; flex-direction: column; align-items: center; justify-content: space-evenly" align="justify">
+
+<div class="callout callout-color5">
+<div class="callout-title">
+<div class="callout-icon">
+
+<i class="fas fa-exclamation-triangle" ></i>
+
+
+</div>
+<div class="callout-title-inner">
+
+Law of large numbers (LLN) scaling
+
+</div>
+</div>
+<div class="callout-content">
+
+When `$W_{ij}$` and `$x_j$` are correlated (i.e. after a gradient update with `$\Delta W_{ij} \propto x_j$` ):
+
+- `$\mu = \mathrm{E}[(W_{ij} + \Delta W_{ij})x_j] \neq 0$`
+
+- **by LLN:** `$\quad \frac{1}{n} \sum_{j}^{n} (W_{ij} + \Delta W_{ij}) x_j \to \mathrm{E}[\Delta W_{ij}x_j] \quad \text{as} \; n \to \infty$`
+
+***************
+
+`$\quad \therefore \mathrm{E}[h_i] \to n \cdot \mathrm{E}[\Delta W_{ij} x_j] \quad \text{as} \; n \to \infty \quad$` (i.e. mean scales with `$n$`).
+
+</div>
+</div>
+</div>
+<!-- .element: style="width: 80%" -->
+
+To ensure `$\mathrm{E}[h_{i}]$` is stable, i.e. `$O(1)$`; we must ensure `$\mathrm{E}[\Delta W_{ij} x_j]$` is `$O(n^{-1})$`. 
+Recall that `$x_j$` is `$O(1)$`, and so we can ensure `$\Delta W_{ij}$` must be `$O(n^{-1})$` instead.  
+<!-- .element: style="width: 60%" -->
+ 
+</div>
+
+<div class="" style="padding: 10px 10px 10px 10px; box-sizing: border-box; position: absolute; left: 0%; top: 95%; height: 5%; width: 100%; display: flex; flex-direction: column; align-items: flex-end; justify-content: flex-end" align="right">
+
+
+</div>
+</div></script></section><section data-markdown><script type="text/template"><!-- .slide: class="drop" -->
+<div class="" style="position: absolute; left: 0px; top: 0px; height: 1200px; width: 1920px; min-height: 1200px; display: flex; flex-direction: column; align-items: center; justify-content: center" absolute="true">
+
+<div class="" style="padding: 10px 10px 10px 10px; box-sizing: border-box; position: absolute; left: 0%; top: 0%; height: 10%; width: 100%; display: flex; flex-direction: column; align-items: center; justify-content: flex-end" align="bottom">
+
+ <div class="block">
+
+### solution: scale learning rate (hyperparameter # 2)
+</div>
+
+ 
+</div>
+
+<div class="" style="padding: 10px 10px 10px 10px; box-sizing: border-box; position: absolute; left: 0%; top: 10%; height: 85%; width: 100%; display: flex; flex-direction: column; align-items: center; justify-content: flex-start" align="top">
+
+ 
+
+
+In SGD with learning rate `$\eta$`, we have `$\Delta W_{ij} = \eta \nabla h_{i} x_{j}$` 
+and our constraint simplifies to  `$\eta \nabla h_i$` having to be `$O(n^{-1})$`. 
+<!-- .element: style="width: 45%" -->
+
+<div class="" style="font-size: 24; padding: 10px 30px 10px 30px; box-sizing: border-box; display: flex; flex-direction: column; align-items: center; justify-content: space-evenly" align="justify">
+
+<div class="callout callout-color1">
+<div class="callout-title">
+<div class="callout-icon">
+
+<i class="fas fa-info-circle" ></i>
+
+
+</div>
+<div class="callout-title-inner">
+
+Output Layer `$U$`
+
+</div>
+</div>
+<div class="callout-content">
+
+-  `$h^{(U)}$` is typically a  `$d_{out}$` logit vector with  `$O(1)$` gradients `$\nabla h^{(U)}$`;
+
+- e.g. for the cross-entropy loss with ground-truth class `$k$` and probabilities `$p = \mathrm{softmax}(h)$`, we have `$\nabla h_{i = k} = 1 - p_{i}$` and `$\nabla h_{i \neq k} = p_{i}$`.
+
+****************
+
+`$\quad \therefore \: \eta^{(U)} = O(n^{-1})$` ensures that `$\Delta W^{(U)} = O(n^{-1})$` <br>
+
+`$\qquad$` and `$h^{(U)}$` remains `$O(1)$` throughout training despite LLN scaling.
+
+</div>
+</div>
+</div>
+<!-- .element: style="width: 60%" -->
+ 
+</div>
+
+<div class="" style="padding: 10px 10px 10px 10px; box-sizing: border-box; position: absolute; left: 0%; top: 95%; height: 5%; width: 100%; display: flex; flex-direction: column; align-items: flex-end; justify-content: flex-end" align="right">
+
+
+</div>
+</div></script></section><section data-markdown><script type="text/template"><!-- .slide: class="drop" -->
+<div class="" style="position: absolute; left: 0px; top: 0px; height: 1200px; width: 1920px; min-height: 1200px; display: flex; flex-direction: column; align-items: center; justify-content: center" absolute="true">
+
+## problem # 3
+
+naively adjusting for problem # 2 does not admit *feature learning*
+</div></script></section><section data-markdown><script type="text/template"><!-- .slide: class="drop" -->
+<div class="" style="position: absolute; left: 0px; top: 0px; height: 1200px; width: 1920px; min-height: 1200px; display: flex; flex-direction: column; align-items: center; justify-content: center" absolute="true">
+
+<div class="" style="padding: 10px 10px 10px 10px; box-sizing: border-box; position: absolute; left: 0%; top: 0%; height: 10%; width: 100%; display: flex; flex-direction: column; align-items: center; justify-content: flex-end" align="bottom">
+
+ <div class="block">
+
+### what does it mean to "not admit feature learning"?
+</div>
+
+ 
+</div>
+
+<div class="" style="padding: 10px 10px 10px 10px; box-sizing: border-box; position: absolute; left: 0%; top: 10%; height: 85%; width: 100%; display: flex; flex-direction: column; align-items: center; justify-content: flex-start" align="top">
+
+ 
+
+
+When a parametrization is said to "not admit feature learning", this implies that the change in input features `$\Delta x$`  as a result of gradient descent become vanishingly small with scale, i.e. `$O(n^{a})$` with `$a < 0$`. 
+<!-- .element: style="width: 60%" -->
+
+<img src="msc/IFT 6760 W24 Presentation/attachments/def_featurea-learning-1a.png" alt="" style="object-fit: scale-down">
+
+<img src="msc/IFT 6760 W24 Presentation/attachments/def_feature-learning-1b.png" alt="" style="object-fit: scale-down">
+
+
+<img src="msc/IFT 6760 W24 Presentation/attachments/def_feature-learning-2a.png" alt="" style="object-fit: scale-down">
+
+<img src="msc/IFT 6760 W24 Presentation/attachments/def_feature-learning-2b.png" alt="" style="object-fit: scale-down">
+
+
+
+ 
+</div>
+
+<div class="" style="padding: 10px 10px 10px 10px; box-sizing: border-box; position: absolute; left: 0%; top: 95%; height: 5%; width: 100%; display: flex; flex-direction: column; align-items: flex-end; justify-content: flex-end" align="right">
+
+<div class="block">
+
+https://arxiv.org/abs/2011.14522
+</div>
+
+
+
+</div>
+</div></script></section><section data-markdown><script type="text/template"><!-- .slide: class="drop" -->
+<div class="" style="position: absolute; left: 0px; top: 0px; height: 1200px; width: 1920px; min-height: 1200px; display: flex; flex-direction: column; align-items: center; justify-content: center" absolute="true">
+
+<div class="" style="padding: 10px 10px 10px 10px; box-sizing: border-box; position: absolute; left: 0%; top: 0%; height: 10%; width: 100%; display: flex; flex-direction: column; align-items: center; justify-content: flex-end" align="bottom">
+
+ <div class="block">
+
+### `$O(n^{-1})$` learning rates prevent feature learning in  hidden layers
+</div>
+
+ 
+</div>
+
+<div class="" style="padding: 10px 10px 10px 10px; box-sizing: border-box; position: absolute; left: 0%; top: 10%; height: 85%; width: 100%; display: flex; flex-direction: column; align-items: center; justify-content: flex-start" align="top">
+
+ 
+
+
+
+In SGD with learning rate `$\eta$`, we have `$\Delta W_{ij} = \eta \nabla h_{i} x_{j}$` 
+and our constraint simplifies to  `$\eta \nabla h_i$` having to be `$O(n^{-1})$`
+<!-- .element: style="width: 45%" -->
+
+<div class="" style="font-size: 20; padding: 10px 30px 10px 30px; box-sizing: border-box; display: flex; flex-direction: column; align-items: center; justify-content: space-evenly" align="justify">
+
+<div class="callout callout-color5">
+<div class="callout-title">
+<div class="callout-icon">
+
+<i class="fas fa-exclamation-triangle" ></i>
+
+
+</div>
+<div class="callout-title-inner">
+
+Final hidden layer `$L$` and hidden layers `$\ell \in [1,L]$`
+
+</div>
+</div>
+<div class="callout-content">
+
+-  `$\nabla h^{(L)}_i$` typically scales like `$\nabla x^{(U)}_i = \sum_{c}^{d_{out}} \nabla h^{(U)}_{c} W^{(U)}_{ci}$`<br>
+
+`$\qquad$` Note that `$\nabla x_j$` is a sum of `$d_{out} \neq n$` terms; and recall that <br>
+
+`$\qquad$`  `$\nabla h^{(U)}=O(1)$` and `$W^{(U)}=O(n^{-1/2})$`
+
+**********
+
+`$\quad \therefore \: \nabla h^{(L)} = O(n^{-1/2})$` such that  `$\eta^{(L)} = O(n^{-1})$`  results in<br>
+
+`$\qquad$` `$\Delta W^{(L)} = O(n^{-3/2})$` and `$\Delta x^{(U)} \propto \Delta h^{(L)}=O(n^{-1/2})$`<br>
+
+`$\qquad$` **i.e. feature learning `$\Delta x^{(U)}$` vanishes with large `$n$`.**
+
+**********
+
+`$\qquad$` Note that  `$\nabla x^{(L)}_j = \sum_{i}^{n} \nabla h^{(L)}_{i} W^{(L)}_{ij} = O(n^{-1/2})$` such that <br>
+
+`$\qquad$` this should generalize to hidden layers `$\ell \in [1,L]$` as long as <br>
+
+`$\qquad$` `$\nabla x^{(\ell+1)} \propto \nabla h^{(\ell)}$` which is typically true for e.g. MLPs or resnets.
+
+
+
+</div>
+</div>
+</div>
+<!-- .element: style="width: 60%" -->
+
+ 
+</div>
+
+<div class="" style="padding: 10px 10px 10px 10px; box-sizing: border-box; position: absolute; left: 0%; top: 95%; height: 5%; width: 100%; display: flex; flex-direction: column; align-items: flex-end; justify-content: flex-end" align="right">
+
+
+</div>
+</div></script></section><section data-markdown><script type="text/template"><!-- .slide: class="drop" -->
+<div class="" style="position: absolute; left: 0px; top: 0px; height: 1200px; width: 1920px; min-height: 1200px; display: flex; flex-direction: column; align-items: center; justify-content: center" absolute="true">
+
+<div class="" style="padding: 10px 10px 10px 10px; box-sizing: border-box; position: absolute; left: 0%; top: 0%; height: 10%; width: 100%; display: flex; flex-direction: column; align-items: center; justify-content: flex-end" align="bottom">
+
+ <div class="block">
+
+### elaborating on the lack of feature learning
+</div>
+
+ 
+</div>
+
+<div class="" style="padding: 10px 10px 10px 10px; box-sizing: border-box; position: absolute; left: 0%; top: 10%; height: 85%; width: 100%; display: flex; flex-direction: column; align-items: center; justify-content: flex-start" align="top">
+
+ 
+
+<div class="" style="font-size: 20; padding: 10px 30px 10px 30px; box-sizing: border-box; display: flex; flex-direction: column; align-items: center; justify-content: space-evenly" align="justify">
+
+<div class="callout callout-color1">
+<div class="callout-title">
+<div class="callout-icon">
+
+<i class="fas fa-info-circle" ></i>
+
+
+</div>
+<div class="callout-title-inner">
+
+How does feature learning vanish in the limit?
+
+</div>
+</div>
+<div class="callout-content">
+
+- We can show that `$\Delta h^{(\ell)} = (W \Delta x  + \Delta W x + \Delta W \Delta x + \Delta b)^{(\ell)}$`
+
+- In the input layer, `$\Delta x^{(in)} = 0$`, and `$\Delta h^{(in)} = (\Delta W x + \Delta b)^{(in)}$`
+
+- Recall that `$\Delta W x$` scales by LLN with `$n \cdot O(\Delta W) \cdot O(x)$`;
+
+- If `$\Delta W^{(in)} = O(n^{-3/2})$`, then `$\Delta h^{(in)} = O(n^{-1/2})$`.
+
+- Typically for MLPs or ResNets, `$O(\Delta x^{(\ell+1)}) = O(\Delta h^{(\ell)})$`.
+
+****************
+
+`$\quad \therefore O(\Delta x^{(l)}) = O(\Delta h^{(in)}) = O(n^{-1/2})$` <br>
+
+`$\qquad$` and the solution does not admit feature learning
+
+`$\qquad$` except in cases where `$\Delta W = O(n^{-1})$`.
+
+</div>
+</div>
+</div>
+<!-- .element: style="width: 60%" -->
+ 
+</div>
+
+<div class="" style="padding: 10px 10px 10px 10px; box-sizing: border-box; position: absolute; left: 0%; top: 95%; height: 5%; width: 100%; display: flex; flex-direction: column; align-items: flex-end; justify-content: flex-end" align="right">
+
+
+</div>
+</div></script></section><section data-markdown><script type="text/template"><!-- .slide: class="drop" -->
+<div class="" style="position: absolute; left: 0px; top: 0px; height: 1200px; width: 1920px; min-height: 1200px; display: flex; flex-direction: column; align-items: center; justify-content: center" absolute="true">
+
+<div class="" style="padding: 10px 10px 10px 10px; box-sizing: border-box; position: absolute; left: 0%; top: 0%; height: 10%; width: 100%; display: flex; flex-direction: column; align-items: center; justify-content: flex-end" align="bottom">
+
+ <div class="block">
+
+### aside on separate learning rates
+</div>
+
+ 
+</div>
+
+<div class="" style="padding: 10px 10px 10px 10px; box-sizing: border-box; position: absolute; left: 0%; top: 10%; height: 85%; width: 100%; display: flex; flex-direction: column; align-items: center; justify-content: flex-start" align="top">
+
+ 
+
+
+<div class="" style="font-size: 18; padding: 10px 30px 10px 30px; box-sizing: border-box; display: flex; flex-direction: column; align-items: center; justify-content: space-evenly" align="justify">
+
+<div class="callout callout-color4">
+<div class="callout-title">
+<div class="callout-icon">
+
+<i class="fas fa-question-circle" ></i>
+
+
+</div>
+<div class="callout-title-inner">
+
+Question I have. Thoughts?
+
+</div>
+</div>
+<div class="callout-content">
+
+In principle, you could use learning rates `$O(n^{-1})$` for output layers, <br>
+
+`$O(n^{-1/2})$`  for hidden layers, and `$O(n^{1/2})$`  for input layers such that <br>
+
+`$\Delta W$` scales with `$n$` in a way which ensures `$\Delta h$` does not vanish.
+
+*******************************
+
+However the original `$\mu$`P paper uses global learning rates. There might be a good reason for this, but I'm not aware of it.  The follow-up `$\mu$`-Transfer loosens this restriction but maintains `$O(1)$` learning rates on hidden weights across variants of equivalent `$\mu$`P implementation. Not clear to me if the reason for this is empirical, grounded in theory, or arbitrary.
+
+</div>
+</div>
+</div>
+<!-- .element: style="width: 60%" -->
+
+
+ 
+</div>
+
+<div class="" style="padding: 10px 10px 10px 10px; box-sizing: border-box; position: absolute; left: 0%; top: 95%; height: 5%; width: 100%; display: flex; flex-direction: column; align-items: flex-end; justify-content: flex-end" align="right">
+
+<div class="block">
+
+http://arxiv.org/abs/2011.14522
+</div>
+
+
+
+</div>
+</div></script></section><section data-markdown><script type="text/template"><!-- .slide: class="drop" -->
+<div class="" style="position: absolute; left: 0px; top: 0px; height: 1200px; width: 1920px; min-height: 1200px; display: flex; flex-direction: column; align-items: center; justify-content: center" absolute="true">
+
+## solution
+
+a sketch of maximal update parametrization
+</div></script></section><section data-markdown><script type="text/template"><!-- .slide: class="drop" -->
+<div class="" style="position: absolute; left: 0px; top: 0px; height: 1200px; width: 1920px; min-height: 1200px; display: flex; flex-direction: column; align-items: center; justify-content: center" absolute="true">
+
+### Get ready
+</div></script></section><section data-markdown><script type="text/template"><!-- .slide: class="drop" -->
+<div class="" style="position: absolute; left: 0px; top: 0px; height: 1200px; width: 1920px; min-height: 1200px; display: flex; flex-direction: column; align-items: center; justify-content: center" absolute="true">
+
+<div class="" style="padding: 10px 10px 10px 10px; box-sizing: border-box; position: absolute; left: 0%; top: 0%; height: 10%; width: 100%; display: flex; flex-direction: column; align-items: center; justify-content: flex-end" align="bottom">
+
+ <div class="block">
+
+#### `$\mu$`P v1
+</div>
+
+ 
+</div>
+
+<div class="" style="padding: 10px 10px 10px 10px; box-sizing: border-box; position: absolute; left: 0%; top: 10%; height: 85%; width: 100%; display: flex; flex-direction: column; align-items: center; justify-content: flex-start" align="top">
+
+ 
+
+
+<img src="msc/IFT 6760 W24 Presentation/attachments/table_tp4.png" alt="" style="object-fit: scale-down">
+
+ 
+</div>
+
+<div class="" style="padding: 10px 10px 10px 10px; box-sizing: border-box; position: absolute; left: 0%; top: 95%; height: 5%; width: 100%; display: flex; flex-direction: column; align-items: flex-end; justify-content: flex-end" align="right">
+
+
+</div>
+</div></script></section><section data-markdown><script type="text/template"><!-- .slide: class="drop" -->
+<div class="" style="position: absolute; left: 0px; top: 0px; height: 1200px; width: 1920px; min-height: 1200px; display: flex; flex-direction: column; align-items: center; justify-content: center" absolute="true">
+
+<div class="" style="padding: 10px 10px 10px 10px; box-sizing: border-box; position: absolute; left: 0%; top: 0%; height: 10%; width: 100%; display: flex; flex-direction: column; align-items: center; justify-content: flex-end" align="bottom">
+
+ <div class="block">
+
+#### `$\mu$`P v2
+</div>
+
+ 
+</div>
+
+<div class="" style="padding: 10px 10px 10px 10px; box-sizing: border-box; position: absolute; left: 0%; top: 10%; height: 85%; width: 100%; display: flex; flex-direction: column; align-items: center; justify-content: flex-start" align="top">
+
+ 
+
+
+<img src="msc/IFT 6760 W24 Presentation/attachments/table_tp5_table-3.png" alt="" style="object-fit: scale-down">
+
+ 
+</div>
+
+<div class="" style="padding: 10px 10px 10px 10px; box-sizing: border-box; position: absolute; left: 0%; top: 95%; height: 5%; width: 100%; display: flex; flex-direction: column; align-items: flex-end; justify-content: flex-end" align="right">
+
+
+</div>
+</div></script></section><section data-markdown><script type="text/template"><!-- .slide: class="drop" -->
+<div class="" style="position: absolute; left: 0px; top: 0px; height: 1200px; width: 1920px; min-height: 1200px; display: flex; flex-direction: column; align-items: center; justify-content: center" absolute="true">
+
+<div class="" style="padding: 10px 10px 10px 10px; box-sizing: border-box; position: absolute; left: 0%; top: 0%; height: 10%; width: 100%; display: flex; flex-direction: column; align-items: center; justify-content: flex-end" align="bottom">
+
+ <div class="block">
+
+#### `$\mu$`P v3
+</div>
+
+ 
+</div>
+
+<div class="" style="padding: 10px 10px 10px 10px; box-sizing: border-box; position: absolute; left: 0%; top: 10%; height: 85%; width: 100%; display: flex; flex-direction: column; align-items: center; justify-content: flex-start" align="top">
+
+ 
+
+
+<img src="msc/IFT 6760 W24 Presentation/attachments/table_tp5_table-8.png" alt="" style="object-fit: scale-down">
+
+ 
+</div>
+
+<div class="" style="padding: 10px 10px 10px 10px; box-sizing: border-box; position: absolute; left: 0%; top: 95%; height: 5%; width: 100%; display: flex; flex-direction: column; align-items: flex-end; justify-content: flex-end" align="right">
+
+
+</div>
+</div></script></section><section data-markdown><script type="text/template"><!-- .slide: class="drop" -->
+<div class="" style="position: absolute; left: 0px; top: 0px; height: 1200px; width: 1920px; min-height: 1200px; display: flex; flex-direction: column; align-items: center; justify-content: center" absolute="true">
+
+<div class="" style="padding: 10px 10px 10px 10px; box-sizing: border-box; position: absolute; left: 0%; top: 0%; height: 10%; width: 100%; display: flex; flex-direction: column; align-items: center; justify-content: flex-end" align="bottom">
+
+ <div class="block">
+
+#### `$\mu$`P v4 `$\sim$` v1
+</div>
+
+ 
+</div>
+
+<div class="" style="padding: 10px 10px 10px 10px; box-sizing: border-box; position: absolute; left: 0%; top: 10%; height: 85%; width: 100%; display: flex; flex-direction: column; align-items: center; justify-content: flex-start" align="top">
+
+ 
+
+
+<img src="msc/IFT 6760 W24 Presentation/attachments/table_tp_5-table-9.png" alt="" style="object-fit: scale-down">
+
+ 
+</div>
+
+<div class="" style="padding: 10px 10px 10px 10px; box-sizing: border-box; position: absolute; left: 0%; top: 95%; height: 5%; width: 100%; display: flex; flex-direction: column; align-items: flex-end; justify-content: flex-end" align="right">
+
+
+</div>
+</div></script></section><section data-markdown><script type="text/template"><!-- .slide: class="drop" -->
+<div class="" style="position: absolute; left: 0px; top: 0px; height: 1200px; width: 1920px; min-height: 1200px; display: flex; flex-direction: column; align-items: center; justify-content: center" absolute="true">
+
+#### everything is gonna be okay
+
+take a deep breath
+</div></script></section></section><section  data-markdown><script type="text/template"><!-- .slide: class="drop" -->
+<div class="" style="position: absolute; left: 0px; top: 0px; height: 1200px; width: 1920px; min-height: 1200px; display: flex; flex-direction: column; align-items: center; justify-content: center" absolute="true">
+
+## Zooming out
+</div></script></section><section ><section data-markdown><script type="text/template"><!-- .slide: class="drop" -->
+<div class="" style="position: absolute; left: 0px; top: 0px; height: 1200px; width: 1920px; min-height: 1200px; display: flex; flex-direction: column; align-items: center; justify-content: center" absolute="true">
+
+<div class="" style="padding: 10px 10px 10px 10px; box-sizing: border-box; position: absolute; left: 0%; top: 0%; height: 10%; width: 100%; display: flex; flex-direction: column; align-items: center; justify-content: flex-end" align="bottom">
+
+ <div class="block">
+
+### Recap desiderata for stable width scaling
+</div>
+
+ 
+</div>
+
+<div class="" style="padding: 10px 10px 10px 10px; box-sizing: border-box; position: absolute; left: 0%; top: 10%; height: 85%; width: 100%; display: flex; flex-direction: column; align-items: center; justify-content: flex-start" align="top">
+
+ 
+
+
+<div class="" style="font-size: 32px; position: absolute; left: 25%; top: 5%; height: 20%; width: 50%; display: flex; flex-direction: column; align-items: center; justify-content: space-evenly" align="justify">
+
+<div class="callout callout-color1">
+<div class="callout-title">
+<div class="callout-icon">
+
+<i class="fas fa-info-circle" ></i>
+
+
+</div>
+<div class="callout-title-inner">
+
+1 - Stable (pre)activations
+
+</div>
+</div>
+<div class="callout-content">
+
+Layer outputs `$h$` should have Θ(1)-sized coordinates.
+
+</div>
+</div>
+<!-- .element: style="width: 100%" -->
+</div>
+
+<div class="" style="font-size: 32px; position: absolute; left: 25%; top: 30%; height: 20%; width: 50%; display: flex; flex-direction: column; align-items: center; justify-content: space-evenly" align="justify">
+
+<div class="callout callout-color1">
+<div class="callout-title">
+<div class="callout-icon">
+
+<i class="fas fa-info-circle" ></i>
+
+
+</div>
+<div class="callout-title-inner">
+
+2 - Stable feature learning
+
+</div>
+</div>
+<div class="callout-content">
+
+Changes in layer inputs `$\Delta x$` should have Θ(1)-sized coordinates.
+
+</div>
+</div>
+<!-- .element: style="width: 100%" -->
+</div>
+
+<div class="" style="font-size: 32px; position: absolute; left: 25%; top: 60%; height: 20%; width: 50%; display: flex; flex-direction: column; align-items: center; justify-content: space-evenly" align="justify">
+
+<div class="callout callout-color1">
+<div class="callout-title">
+<div class="callout-icon">
+
+<i class="fas fa-info-circle" ></i>
+
+
+</div>
+<div class="callout-title-inner">
+
+3 - Accounting for CLT versus LLN scaling
+
+</div>
+</div>
+<div class="callout-content">
+
+Initialization, multipliers and learning rates should be set to account for changes in scaling behavior due to weight-input correlations induced by gradient updates.
+
+</div>
+</div>
+<!-- .element: style="width: 100%" -->
+</div>
+
+
+
+
+ 
+</div>
+
+<div class="" style="padding: 10px 10px 10px 10px; box-sizing: border-box; position: absolute; left: 0%; top: 95%; height: 5%; width: 100%; display: flex; flex-direction: column; align-items: flex-end; justify-content: flex-end" align="right">
+
+<div class="block">
+
+https://arxiv.org/pdf/2203.03466.pdf#subsection.J.2
+</div>
+
+
+
+</div>
+</div></script></section><section data-markdown><script type="text/template"><!-- .slide: class="drop" -->
+<div class="" style="position: absolute; left: 0px; top: 0px; height: 1200px; width: 1920px; min-height: 1200px; display: flex; flex-direction: column; align-items: center; justify-content: center" absolute="true">
+
+<div class="" style="padding: 10px 10px 10px 10px; box-sizing: border-box; position: absolute; left: 0%; top: 0%; height: 10%; width: 100%; display: flex; flex-direction: column; align-items: center; justify-content: flex-end" align="bottom">
+
+ <div class="block">
+
+### Add multiplier to forward and backward computations
+</div>
+
+ 
+</div>
+
+<div class="" style="padding: 10px 10px 10px 10px; box-sizing: border-box; position: absolute; left: 0%; top: 10%; height: 85%; width: 100%; display: flex; flex-direction: column; align-items: center; justify-content: flex-start" align="top">
+
+ 
+
+
+
+<div class="" style="font-size: 32px; position: absolute; left: 5%; top: 5%; height: 40%; width: 45%; display: flex; flex-direction: column; align-items: flex-start; justify-content: flex-start" align="left">
+
+<div class="callout callout-color1">
+<div class="callout-title">
+<div class="callout-icon">
+
+<i class="fas fa-info-circle" ></i>
+
+
+</div>
+<div class="callout-title-inner">
+
+Forward pass (preactivation computation)
+
+</div>
+</div>
+<div class="callout-content">
+
+- **Vector-wise:** `$h = m W x + b$`
+
+- **Element-wise:** `$h_{i} = \sum_{j}^{d_{in}} \: (m W_{ij} \: x_{j}) + b_{i}$`
+
+- **Loss function:** `$L = f(h)$` for some function `$f$`
+
+</div>
+</div>
+<!-- .element: style="width: 100%" -->
+</div>
+
+<div class="" style="font-size: 32px; position: absolute; left: 5%; top: 50%; height: 40%; width: 45%; display: flex; flex-direction: column; align-items: flex-start; justify-content: flex-start" align="left">
+
+<div class="callout callout-color1">
+<div class="callout-title">
+<div class="callout-icon">
+
+<i class="fas fa-info-circle" ></i>
+
+
+</div>
+<div class="callout-title-inner">
+
+Backward pass (gradient computation)
+
+</div>
+</div>
+<div class="callout-content">
+
+- **Outputs:** `$\nabla h = \frac{dL}{dh_{i}}$` (assume known)
+
+- **Weights:** `$\nabla W_{ij} = \frac{dL}{dh_{i}} \frac{dh_{i}}{dW_{ij}} = \nabla h_{i} \: m \: x_j$`
+
+- **Bias:**  `$\nabla b_{i} = \frac{dL}{dh_{i}} \frac{dh_{i}}{db_{i}} = \nabla h_{i}$`
+
+- **Input:** `$\nabla x_{j} = \sum_{i}^{d_{out}} \:  \frac{dL}{dh_{i}} \frac{dh_{i}}{dx_{j}} = \sum_{i}^{d_{out}} \: \nabla h_{i} \: m \: W_{ij} $`
+
+</div>
+</div>
+<!-- .element: style="width: 100%" -->
+</div>
+
+<div class="" style="font-size: 24px; position: absolute; left: 55%; top: 5%; height: 40%; width: 40%; display: flex; flex-direction: column; align-items: flex-start; justify-content: flex-start" align="left">
+
+<div class="callout callout-color8">
+<div class="callout-title">
+<div class="callout-icon">
+
+<i class="fas fa-list" ></i>
+
+
+</div>
+<div class="callout-title-inner">
+
+Notation
+
+</div>
+</div>
+<div class="callout-content">
+
+- `$W$` is the `$(d_{out} \times d_{in})$` weight matrix of the layer;
+
+- `$h$` is the `$d_{out}$` vector of "preactivations" output by the layer;
+
+- `$x$` is the `$d_{in}$` vector of features input to the layer;
+
+- `$b$` is the `$d_{out}$`-dimensional bias vector of the layer;
+
+- `$m$` is a fixed scalar multiplier for `$W$`, or equivalently for `$h$` or `$x$`.
+
+</div>
+</div>
+<!-- .element: style="width: 100%" -->
+</div>
+
+<div class="" style="font-size: 24px; position: absolute; left: 55%; top: 50%; height: 40%; width: 40%; display: flex; flex-direction: column; align-items: flex-start; justify-content: flex-start" align="left">
+
+<div class="callout callout-color5">
+<div class="callout-title">
+<div class="callout-icon">
+
+<i class="fas fa-exclamation-triangle" ></i>
+
+
+</div>
+<div class="callout-title-inner">
+
+Desiderata
+
+</div>
+</div>
+<div class="callout-content">
+
+1. Stable `$h$` and therefore `$x$` in infinite width limit.
+
+2. Stable and maximal `$\Delta x$` in infinite width limit.
+
+3. CLT vs LLN scaling aware.
+
+</div>
+</div>
+<!-- .element: style="width: 100%" -->
+</div>
+ 
+</div>
+
+<div class="" style="padding: 10px 10px 10px 10px; box-sizing: border-box; position: absolute; left: 0%; top: 95%; height: 5%; width: 100%; display: flex; flex-direction: column; align-items: flex-end; justify-content: flex-end" align="right">
+
+
+</div>
+</div></script></section><section data-markdown><script type="text/template"><!-- .slide: class="drop" -->
+<div class="" style="position: absolute; left: 0px; top: 0px; height: 1200px; width: 1920px; min-height: 1200px; display: flex; flex-direction: column; align-items: center; justify-content: center" absolute="true">
+
+<div class="" style="padding: 10px 10px 10px 10px; box-sizing: border-box; position: absolute; left: 0%; top: 0%; height: 10%; width: 100%; display: flex; flex-direction: column; align-items: center; justify-content: flex-end" align="bottom">
+
+ <div class="block">
+
+### Translate desiderata to constraints (1/?)
+</div>
+
+ 
+</div>
+
+<div class="" style="padding: 10px 10px 10px 10px; box-sizing: border-box; position: absolute; left: 0%; top: 10%; height: 85%; width: 100%; display: flex; flex-direction: column; align-items: center; justify-content: flex-start" align="top">
+
+ 
+
+
+<div class="" style="font-size: 32px; display: flex; flex-direction: column; align-items: center; justify-content: space-evenly" align="justify">
+
+<div class="callout callout-color1">
+<div class="callout-title">
+<div class="callout-icon">
+
+<i class="fas fa-info-circle" ></i>
+
+
+</div>
+<div class="callout-title-inner">
+
+Stable (pre)activations at initialization
+
+</div>
+</div>
+<div class="callout-content">
+
+**Output and hidden layers with `$d_{in}=n$` (CLT scaling):** <br>
+
+We want `$O(h) = O(1)$` for `$h = \sum_{j}^{n} (mW_{ij}x_j) + b$`
+
+- `$W: \quad O(n^{1/2}) \cdot O(m) \cdot O(W) \cdot O(x) = O(1)$`
+
+
+
+**Input layers with `$d_{in}\neq n$` (no scaling):** <br>
+
+We want `$O(h) = O(1)$` for `$h = \sum_{j}^{d_{in}} (mW_{ij}x_j) + b$`
+
+- `$W:  \quad O(m) \cdot O(W) \cdot O(x) = O(1)$`
+
+
+
+**Bias weights:**
+
+- `$b:  \;\;\quad O(b) = O(1)$`
+
+</div>
+</div>
+</div>
+ 
+</div>
+
+<div class="" style="padding: 10px 10px 10px 10px; box-sizing: border-box; position: absolute; left: 0%; top: 95%; height: 5%; width: 100%; display: flex; flex-direction: column; align-items: flex-end; justify-content: flex-end" align="right">
+
+
+</div>
+</div></script></section><section data-markdown><script type="text/template"><!-- .slide: class="drop" -->
+<div class="" style="position: absolute; left: 0px; top: 0px; height: 1200px; width: 1920px; min-height: 1200px; display: flex; flex-direction: column; align-items: center; justify-content: center" absolute="true">
+
+<div class="" style="padding: 10px 10px 10px 10px; box-sizing: border-box; position: absolute; left: 0%; top: 0%; height: 10%; width: 100%; display: flex; flex-direction: column; align-items: center; justify-content: flex-end" align="bottom">
+
+ <div class="block">
+
+### Translate desiderata to constraints (2/?)
+</div>
+
+ 
+</div>
+
+<div class="" style="padding: 10px 10px 10px 10px; box-sizing: border-box; position: absolute; left: 0%; top: 10%; height: 85%; width: 100%; display: flex; flex-direction: column; align-items: center; justify-content: flex-start" align="top">
+
+ 
+
+
+<div class="" style="font-size: 32px; display: flex; flex-direction: column; align-items: center; justify-content: space-evenly" align="justify">
+
+<div class="callout callout-color1">
+<div class="callout-title">
+<div class="callout-icon">
+
+<i class="fas fa-info-circle" ></i>
+
+
+</div>
+<div class="callout-title-inner">
+
+Stable (pre)activations after gradient updates
+
+</div>
+</div>
+<div class="callout-content">
+
+**Output and hidden layer weights with `$d_{in}=n$` (LLN scaling):** <br>
+
+We want `$O(\Delta W) = O(n^{-1})$` to account for LLN scaling.
+
+- `$\Delta W: \quad O(n) \cdot O(\eta) \cdot O(\nabla h) \cdot O(m) \cdot O(x) = O(1)$`
+
+
+
+**Input layers weights with `$d_{in}\neq n$` (no scaling):** <br>
+
+We want `$O(\Delta W) = O(W)$` to be consistent with initialization.
+
+- `$\Delta W:  \quad O(\eta) \cdot O(\nabla h) \cdot O(m) \cdot O(x) = O(W)$`
+
+
+
+**Bias weights:**
+
+- `$\Delta b:  \;\;\quad O(\eta) \cdot O(\nabla h) = O(1)$`
+
+</div>
+</div>
+</div>
+<!-- .element: style="width: 55%" -->
+ 
+</div>
+
+<div class="" style="padding: 10px 10px 10px 10px; box-sizing: border-box; position: absolute; left: 0%; top: 95%; height: 5%; width: 100%; display: flex; flex-direction: column; align-items: flex-end; justify-content: flex-end" align="right">
+
+
+</div>
+</div></script></section><section data-markdown><script type="text/template"><!-- .slide: class="drop" -->
+<div class="" style="position: absolute; left: 0px; top: 0px; height: 1200px; width: 1920px; min-height: 1200px; display: flex; flex-direction: column; align-items: center; justify-content: center" absolute="true">
+
+<div class="" style="padding: 10px 10px 10px 10px; box-sizing: border-box; position: absolute; left: 0%; top: 0%; height: 10%; width: 100%; display: flex; flex-direction: column; align-items: center; justify-content: flex-end" align="bottom">
+
+ <div class="block">
+
+### Translate desiderata to constraints (3/?)
+</div>
+
+ 
+</div>
+
+<div class="" style="padding: 10px 10px 10px 10px; box-sizing: border-box; position: absolute; left: 0%; top: 10%; height: 85%; width: 100%; display: flex; flex-direction: column; align-items: center; justify-content: flex-start" align="top">
+
+ 
+
+
+<div class="" style="font-size: 32px; display: flex; flex-direction: column; align-items: center; justify-content: space-evenly" align="justify">
+
+<div class="callout callout-color1">
+<div class="callout-title">
+<div class="callout-icon">
+
+<i class="fas fa-info-circle" ></i>
+
+
+</div>
+<div class="callout-title-inner">
+
+Stable feature learning
+
+</div>
+</div>
+<div class="callout-content">
+
+I'm honestly not sure; the derivations can get quite convoluted, but if the previous constraints are respected then `$\Delta h$` and `$\Delta x$` should be `$O(1)$` to the best of my knowledge. But verify empirically and adjust if necessary!
+
+</div>
+</div>
+</div>
+<!-- .element: style="width: 55%" -->
+ 
+</div>
+
+<div class="" style="padding: 10px 10px 10px 10px; box-sizing: border-box; position: absolute; left: 0%; top: 95%; height: 5%; width: 100%; display: flex; flex-direction: column; align-items: flex-end; justify-content: flex-end" align="right">
+
+
+</div>
+</div></script></section></section><section ><section data-markdown><script type="text/template"><!-- .slide: class="drop" -->
+<div class="" style="position: absolute; left: 0px; top: 0px; height: 1200px; width: 1920px; min-height: 1200px; display: flex; flex-direction: column; align-items: center; justify-content: center" absolute="true">
+
+## Further reading
+</div></script></section><section data-markdown><script type="text/template"><!-- .slide: class="drop" -->
+<div class="" style="position: absolute; left: 0px; top: 0px; height: 1200px; width: 1920px; min-height: 1200px; display: flex; flex-direction: column; align-items: center; justify-content: center" absolute="true">
+
+<div class="" style="padding: 10px 10px 10px 10px; box-sizing: border-box; position: absolute; left: 0%; top: 0%; height: 10%; width: 100%; display: flex; flex-direction: column; align-items: center; justify-content: flex-end" align="bottom">
+
+ <div class="block">
+
+## Tensor programs  overview (4-6)
+</div>
+
+ 
+</div>
+
+<div class="" style="padding: 10px 10px 10px 10px; box-sizing: border-box; position: absolute; left: 0%; top: 10%; height: 85%; width: 100%; display: flex; flex-direction: column; align-items: center; justify-content: flex-start" align="top">
+
+ 
+
+
+<img src="msc/IFT 6760 W24 Presentation/attachments/fig_tp.png" alt="" style="width: 1600px; object-fit: fill">
+
+
+
+ 
+</div>
+
+<div class="" style="padding: 10px 10px 10px 10px; box-sizing: border-box; position: absolute; left: 0%; top: 95%; height: 5%; width: 100%; display: flex; flex-direction: column; align-items: flex-end; justify-content: flex-end" align="right">
+
+<div class="block">
+
+https://thegregyang.com/#tensorprograms
+</div>
+
+
+
+</div>
+</div></script></section><section data-markdown><script type="text/template"><!-- .slide: class="drop" -->
+<div class="" style="position: absolute; left: 0px; top: 0px; height: 1200px; width: 1920px; min-height: 1200px; display: flex; flex-direction: column; align-items: center; justify-content: center" absolute="true">
+
+<div class="" style="padding: 10px 10px 10px 10px; box-sizing: border-box; position: absolute; left: 0%; top: 0%; height: 10%; width: 100%; display: flex; flex-direction: column; align-items: center; justify-content: flex-end" align="bottom">
+
+ <div class="block">
+
+## Maximal update parametrization (`$\mu$`P)
+</div>
+
+ 
+</div>
+
+<div class="" style="padding: 10px 10px 10px 10px; box-sizing: border-box; position: absolute; left: 0%; top: 10%; height: 85%; width: 100%; display: flex; flex-direction: column; align-items: center; justify-content: flex-start" align="top">
+
+ 
+
+Or how to ensure **stable activations** and **feature learning** in the infinite-width limit .
+
+
+<img src="msc/IFT 6760 W24 Presentation/attachments/fig_paper_tp4.png" alt="" style="width: 1200px; object-fit: fill">
+
+
+(not for the faint of heart)
+
+
+ 
+</div>
+
+<div class="" style="padding: 10px 10px 10px 10px; box-sizing: border-box; position: absolute; left: 0%; top: 95%; height: 5%; width: 100%; display: flex; flex-direction: column; align-items: flex-end; justify-content: flex-end" align="right">
+
+<div class="block">
+
+https://arxiv.org/abs/2011.14522
+</div>
+
+
+
+</div>
+</div></script></section><section data-markdown><script type="text/template"><!-- .slide: class="drop" -->
+<div class="" style="position: absolute; left: 0px; top: 0px; height: 1200px; width: 1920px; min-height: 1200px; display: flex; flex-direction: column; align-items: center; justify-content: center" absolute="true">
+
+<div class="" style="padding: 10px 10px 10px 10px; box-sizing: border-box; position: absolute; left: 0%; top: 0%; height: 10%; width: 100%; display: flex; flex-direction: column; align-items: center; justify-content: flex-end" align="bottom">
+
+ <div class="block">
+
+## `$\mu$`P intuition without tears 
+</div>
+
+ 
+</div>
+
+<div class="" style="padding: 10px 10px 10px 10px; box-sizing: border-box; position: absolute; left: 0%; top: 10%; height: 85%; width: 100%; display: flex; flex-direction: column; align-items: center; justify-content: flex-start" align="top">
+
+ 
+
+
+<img src="msc/IFT 6760 W24 Presentation/attachments/fig_paper_scfl.png" alt="" style="width: 1200px; object-fit: fill">
+
+
+> A very accessible and pedagogical intro to the scaling (with width) of feature learning. Since the TP series has a reputation for being hard-to-read, this one is not numbered so people will be more likely to read it ;)
+
+\- Greg Yang
+
+
+ 
+</div>
+
+<div class="" style="padding: 10px 10px 10px 10px; box-sizing: border-box; position: absolute; left: 0%; top: 95%; height: 5%; width: 100%; display: flex; flex-direction: column; align-items: flex-end; justify-content: flex-end" align="right">
+
+<div class="block">
+
+https://arxiv.org/abs/2310.17813
+</div>
+
+
+
+</div>
+</div></script></section><section data-markdown><script type="text/template"><!-- .slide: class="drop" -->
+<div class="" style="position: absolute; left: 0px; top: 0px; height: 1200px; width: 1920px; min-height: 1200px; display: flex; flex-direction: column; align-items: center; justify-content: center" absolute="true">
+
+<div class="" style="padding: 10px 10px 10px 10px; box-sizing: border-box; position: absolute; left: 0%; top: 0%; height: 10%; width: 100%; display: flex; flex-direction: column; align-items: center; justify-content: flex-end" align="bottom">
+
+ <div class="block">
+
+## `$\mu$`-Transfer
+</div>
+
+ 
+</div>
+
+<div class="" style="padding: 10px 10px 10px 10px; box-sizing: border-box; position: absolute; left: 0%; top: 10%; height: 85%; width: 100%; display: flex; flex-direction: column; align-items: center; justify-content: flex-start" align="top">
+
+ 
+
+Or how to leverage `$\mu$`P to find an optimal learning rate which transfers across scales. 
+
+<img src="msc/IFT 6760 W24 Presentation/attachments/fig_paper_tp5.png" alt="" style="width: 1200px; object-fit: fill">
+
+
+
+ 
+</div>
+
+<div class="" style="padding: 10px 10px 10px 10px; box-sizing: border-box; position: absolute; left: 0%; top: 95%; height: 5%; width: 100%; display: flex; flex-direction: column; align-items: flex-end; justify-content: flex-end" align="right">
+
+<div class="block">
+
+https://arxiv.org/abs/2203.03466
+</div>
+
+
+
+</div>
+</div></script></section><section data-markdown><script type="text/template"><!-- .slide: class="drop" -->
+<div class="" style="position: absolute; left: 0px; top: 0px; height: 1200px; width: 1920px; min-height: 1200px; display: flex; flex-direction: column; align-items: center; justify-content: center" absolute="true">
+
+<div class="" style="padding: 10px 10px 10px 10px; box-sizing: border-box; position: absolute; left: 0%; top: 0%; height: 10%; width: 100%; display: flex; flex-direction: column; align-items: center; justify-content: flex-end" align="bottom">
+
+ <div class="block">
+
+## Depth-`$\mu$`P
+</div>
+
+ 
+</div>
+
+<div class="" style="padding: 10px 10px 10px 10px; box-sizing: border-box; position: absolute; left: 0%; top: 10%; height: 85%; width: 100%; display: flex; flex-direction: column; align-items: center; justify-content: flex-start" align="top">
+
+ 
+
+Or how to extend `$\mu$`P to depth scaling in residual networks by ensuring **feature diversity** across layers.
+
+<img src="msc/IFT 6760 W24 Presentation/attachments/fig_paper_tp6.png" alt="" style="width: 1200px; object-fit: fill">
+
+
+
+ 
+</div>
+
+<div class="" style="padding: 10px 10px 10px 10px; box-sizing: border-box; position: absolute; left: 0%; top: 95%; height: 5%; width: 100%; display: flex; flex-direction: column; align-items: flex-end; justify-content: flex-end" align="right">
+
+<div class="block">
+
+http://arxiv.org/abs/2310.02244
+</div>
+
+
+
+</div>
+</div></script></section></section></div>
+    </div>
+
+    <script src="dist/reveal.js"></script>
+
+    <script src="plugin/markdown/markdown.js"></script>
+    <script src="plugin/highlight/highlight.js"></script>
+    <script src="plugin/zoom/zoom.js"></script>
+    <script src="plugin/notes/notes.js"></script>
+    <script src="plugin/math/math.js"></script>
+	<script src="plugin/mermaid/mermaid.js"></script>
+	<script src="plugin/chart/chart.min.js"></script>
+	<script src="plugin/chart/plugin.js"></script>
+	<script src="plugin/customcontrols/plugin.js"></script>
+
+    <script>
+      function extend() {
+        var target = {};
+        for (var i = 0; i < arguments.length; i++) {
+          var source = arguments[i];
+          for (var key in source) {
+            if (source.hasOwnProperty(key)) {
+              target[key] = source[key];
+            }
+          }
+        }
+        return target;
+      }
+
+	  function isLight(color) {
+		let hex = color.replace('#', '');
+
+		// convert #fff => #ffffff
+		if(hex.length == 3){
+			hex = `${hex[0]}${hex[0]}${hex[1]}${hex[1]}${hex[2]}${hex[2]}`;
+		}
+
+		const c_r = parseInt(hex.substr(0, 2), 16);
+		const c_g = parseInt(hex.substr(2, 2), 16);
+		const c_b = parseInt(hex.substr(4, 2), 16);
+		const brightness = ((c_r * 299) + (c_g * 587) + (c_b * 114)) / 1000;
+		return brightness > 155;
+	}
+
+	var bgColor = getComputedStyle(document.documentElement).getPropertyValue('--r-background-color').trim();
+	var isLight = isLight(bgColor);
+
+	if(isLight){
+		document.body.classList.add('has-light-background');
+	} else {
+		document.body.classList.add('has-dark-background');
+	}
+
+      // default options to init reveal.js
+      var defaultOptions = {
+        controls: true,
+        progress: true,
+        history: true,
+        center: true,
+        transition: 'default', // none/fade/slide/convex/concave/zoom
+        plugins: [
+          RevealMarkdown,
+          RevealHighlight,
+          RevealZoom,
+          RevealNotes,
+          RevealMath.MathJax3,
+		  RevealMermaid,
+		  RevealChart,
+		  RevealCustomControls,
+        ],
+
+
+    	allottedTime: 120 * 1000,
+
+		mathjax3: {
+			mathjax: 'plugin/math/mathjax/tex-mml-chtml.js',
+		},
+		markdown: {
+		  gfm: true,
+		  mangle: true,
+		  pedantic: false,
+		  smartLists: false,
+		  smartypants: false,
+		},
+
+		mermaid: {
+			theme: isLight ? 'default' : 'dark',
+		},
+
+		customcontrols: {
+			controls: [
+				{id: 'toggle-overview',
+				title: 'Toggle overview (O)',
+				icon: '<i class="fa fa-th"></i>',
+				action: 'Reveal.toggleOverview();'
+				},
+			]
+		},
+      };
+
+      // options from URL query string
+      var queryOptions = Reveal().getQueryHash() || {};
+
+      var options = extend(defaultOptions, {"width":1920,"height":1200,"margin":0,"controls":true,"progress":true,"slideNumber":true,"transition":"slide","transitionSpeed":"default"}, queryOptions);
+    </script>
+
+    <script>
+      Reveal.initialize(options);
+    </script>
+  </body>
+
+  <!-- created with Advanced Slides -->
+</html>
