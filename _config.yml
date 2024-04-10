@@ -236,7 +236,8 @@ defaults:
       sitemap: false
 
 sass:
-  style: compressed
+  # style: compressed
+  sourcemap: never # https://github.com/alshedivat/al-folio/issues/2303
 
 # -----------------------------------------------------------------------------
 # Jekyll Minifier
